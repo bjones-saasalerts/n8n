@@ -11,7 +11,7 @@ More workflows coming soon!
 ## 🛠 Requirements
 
 - n8n instance (self-hosted or cloud)
-- SaaS Alerts API key and customer ID
+- SaaS Alerts API key
 - Basic understanding of n8n nodes and variables
 
 ## 🚀 Getting Started
