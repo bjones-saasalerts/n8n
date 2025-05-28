@@ -1,0 +1,316 @@
+{
+  "name": "Export all Events",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1660,
+        40
+      ],
+      "id": "ba5cadd6-efea-428e-8734-3a9ce9f60aec",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://us-central1-the-byway-248217.cloudfunctions.net/reportApi/api/v1/reports/events/query",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $json.api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"body\": {\n    \"query\": {\n      \"bool\": {\n        \"must\": [\n          {\n            \"match_all\": {}\n          }\n        ],\n        \"filter\": [\n          {\n            \"term\": {\n              \"customer.id\": \"{{ $('Set Workflow Variables').item.json.customerid }}\"\n            }\n          },\n          {\n            \"range\": {\n              \"time\": {\n                \"gte\": \"{{ $json.startTime }}\",\n                \"lte\": \"{{ $json.endTime }}\"\n              }\n            }\n          }\n        ]\n      }\n    },\n    \"sort\": {\n      \"time\": \"asc\"\n    },\n    \"size\": 500\n  },\n  \"scroll\": \"5m\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1220,
+        40
+      ],
+      "id": "4f355a73-cbd6-480a-8b91-5942fbb9b6de",
+      "name": "Query Events - Initial",
+      "executeOnce": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://us-central1-the-byway-248217.cloudfunctions.net/reportApi/api/v1/reports/events/scroll",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $('Set Workflow Variables').item.json.api_key }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"scroll\": \"5m\",\n  \"scrollId\": \"{{ $('Set Scroll ID / Count Records').item.json.scroll_id }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -460,
+        120
+      ],
+      "id": "d9546ba6-96e6-4b8b-b949-b24961157149",
+      "name": "Query Events - Continued",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8d4662e4-3769-4a02-91a7-4e666ebadc7a",
+              "name": "api_key",
+              "value": "abc1234",
+              "type": "string"
+            },
+            {
+              "id": "8fd24cba-7406-4852-b50b-a495ef3fdfa5",
+              "name": "time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "id": "b88df1ea-357c-43a7-aace-72b2a6063c96",
+              "name": "startTime",
+              "value": "2025-05-20T00:00:00.000Z",
+              "type": "string"
+            },
+            {
+              "id": "f34e5e5f-6b12-48bd-85ce-afa8f820ab0d",
+              "name": "customerid",
+              "value": "C3lp5bU0bNobn9Us8EnM",
+              "type": "string"
+            },
+            {
+              "id": "b3468fa1-a22a-4dfc-b6ec-9354ef83527e",
+              "name": "endTime",
+              "value": "2025-05-20T12:59:00.000Z",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1440,
+        40
+      ],
+      "id": "53ab8510-2430-4499-aec0-7c6c44a4d062",
+      "name": "Set Workflow Variables"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "02d6a467-67a2-4a62-86b3-71c16cf21ba0",
+              "leftValue": "={{ $json.hits.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -780,
+        40
+      ],
+      "id": "1c55d3e7-6fed-4fd5-8c26-c7a482e844e6",
+      "name": "Events Greater than 0"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b14f3360-1cfd-4be4-9bf3-cb023e5d2197",
+              "name": "scroll_id",
+              "value": "={{ $json._scroll_id }}",
+              "type": "string"
+            },
+            {
+              "id": "0a276783-302e-402f-841c-5577754eb2cd",
+              "name": "hits",
+              "value": "={{ $json.hits.hits }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1000,
+        40
+      ],
+      "id": "d77b6f03-e8eb-4842-bf6b-bbe1553d061e",
+      "name": "Set Scroll ID / Count Records"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -60
+      ],
+      "id": "4a843cb8-be60-4ac4-b627-c0f9abdaf9c7",
+      "name": "Aggregate"
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Test workflow’": [
+      {
+        "json": {}
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Set Workflow Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Events - Initial": {
+      "main": [
+        [
+          {
+            "node": "Set Scroll ID / Count Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Events - Continued": {
+      "main": [
+        [
+          {
+            "node": "Set Scroll ID / Count Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Workflow Variables": {
+      "main": [
+        [
+          {
+            "node": "Query Events - Initial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Events Greater than 0": {
+      "main": [
+        [
+          {
+            "node": "Query Events - Continued",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Scroll ID / Count Records": {
+      "main": [
+        [
+          {
+            "node": "Events Greater than 0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "21653262-9828-4248-bcd6-dea1bd3f952e",
+  "meta": {
+    "instanceId": "c3bda8b31d1e04418e1c2bb9e687fe6b2563b67d165c1ef431cd3ef99292ed77"
+  },
+  "id": "7tR7UZ3hwvlex2Xp",
+  "tags": [
+    {
+      "createdAt": "2025-03-18T15:35:57.119Z",
+      "updatedAt": "2025-03-18T15:35:57.119Z",
+      "id": "l2p0JyXnS87FJxoF",
+      "name": "Support"
+    }
+  ]
+}
